@@ -48,10 +48,11 @@ pub fn install(args: &Value, _settings: &Settings) -> Result<String> {
         .and_then(|v| v.as_str())
         .ok_or_else(|| anyhow!("missing name"))?;
     match detect() {
-        PkgMgr::Apt => run_cmd(&["sudo", "apt-get", "install", "-y", name]),
-        PkgMgr::Pacman => run_cmd(&["sudo", "pacman", "-S", "--noconfirm", name]),
+        // Use -n (non-interactive) to prevent password prompt hanging
+        PkgMgr::Apt => run_cmd(&["sudo", "-n", "apt-get", "install", "-y", name]),
+        PkgMgr::Pacman => run_cmd(&["sudo", "-n", "pacman", "-S", "--noconfirm", name]),
         PkgMgr::NixEnv => run_cmd(&["nix-env", "-iA", name]),
-        PkgMgr::Dnf => run_cmd(&["sudo", "dnf", "install", "-y", name]),
+        PkgMgr::Dnf => run_cmd(&["sudo", "-n", "dnf", "install", "-y", name]),
         PkgMgr::Unknown => Ok(
             "No supported package manager detected (apt/pacman/nix-env/dnf). On NixOS you may prefer editing configuration.nix — not automated here."
                 .into(),
