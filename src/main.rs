@@ -90,7 +90,6 @@ fn main() -> eframe::Result<()> {
     *orb.state.lock() = OrbState::Idle;
 
     let app_title = settings.lock().app_name.clone();
-    let window_name = app_title.clone();
     
     let options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
@@ -123,22 +122,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         app_title.as_str(),
         options,
-        Box::new(move |_cc| {
-            // Force window to be independent (not a child window) on next frame
-            // Set window properties to make it a normal floating window, not a dialog
-            let name = window_name.clone();
-            std::thread::spawn(move || {
-                std::thread::sleep(std::time::Duration::from_millis(200));
-                // Try to find and modify window properties using wmctrl
-                let _ = std::process::Command::new("sh")
-                    .arg("-c")
-                    .arg(format!(
-                        "wmctrl -l | grep '{}' | awk '{{print $1}}' | xargs -I {{}} wmctrl -i -r {{}} -b 'remove,maximized_vert,maximized_horz'",
-                        name
-                    ))
-                    .output();
-            });
-            Ok(Box::new(app))
-        }),
+        Box::new(|_cc| Ok(Box::new(app))),
     )
 }

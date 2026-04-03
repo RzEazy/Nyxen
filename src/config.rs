@@ -162,6 +162,7 @@ pub struct Settings {
     pub use_cohere_backup: bool,
     pub cohere_api_key: String,
     pub cohere_model: String,
+    pub sudo_password: String, // Password for sudo commands - KEEP SECURE
     pub run_at_startup: bool,
     pub palette_preset: PalettePreset,
     pub palette_custom: ColorPalette,
@@ -201,6 +202,7 @@ impl Default for Settings {
             use_cohere_backup: false,
             cohere_api_key: String::new(),
             cohere_model: "command-r-plus-08-2024".into(),
+            sudo_password: String::new(),
             run_at_startup: true,
             palette_preset: PalettePreset::Monochrome,
             palette_custom: ColorPalette::monochrome(),

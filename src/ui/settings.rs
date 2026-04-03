@@ -171,6 +171,26 @@ pub fn general_tab(ui: &mut egui::Ui, settings: &mut Settings, conn: &rusqlite::
                 });
         });
     }
+    ui.add_space(12.0);
+    ui.label("🔐 System Access");
+    ui.horizontal(|ui| {
+        ui.label("Sudo password:");
+        if ui
+            .add(
+                egui::TextEdit::singleline(&mut settings.sudo_password)
+                    .desired_width(280.0)
+                    .password(true),
+            )
+            .changed()
+        {
+            save(settings, conn);
+        }
+    });
+    ui.label(
+        RichText::new("Password is stored locally and used to run sudo commands automatically")
+            .small()
+            .weak(),
+    );
     ui.horizontal(|ui| {
         if ui
             .checkbox(
