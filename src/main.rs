@@ -96,11 +96,11 @@ fn main() -> eframe::Result<()> {
             .with_decorations(false)
             .with_always_on_top()
             .with_visible(false)
-            .with_inner_size([380.0, 480.0])
-            .with_min_inner_size([320.0, 400.0])
+            .with_inner_size([500.0, 650.0])
+            .with_min_inner_size([400.0, 500.0])
             .with_transparent(false)
             .with_fullscreen(false)
-            .with_resizable(false),
+            .with_resizable(true),
         ..Default::default()
     };
 

@@ -40,6 +40,7 @@ pub fn dispatch(name: &str, args: &Value, settings: &Settings, confirm_tx: &cros
         "remove_package" => packages::remove(args, settings),
         "update_packages" => packages::update_all(settings),
         "search_package" => packages::search(args, settings),
+        "get_current_time" => sysinfo::get_current_time(),
         "get_sysinfo" => sysinfo::get_info_json(),
         "get_top_processes" => sysinfo::get_top_processes_json(),
         "get_network" => sysinfo::get_network_json(),
@@ -190,6 +191,14 @@ pub fn tool_definitions_json() -> Value {
                     "properties": { "name": { "type": "string" } },
                     "required": ["name"]
                 }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "get_current_time",
+                "description": "Get the current date and time",
+                "parameters": { "type": "object", "properties": {} }
             }
         },
         {

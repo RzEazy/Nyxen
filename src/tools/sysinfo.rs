@@ -3,6 +3,19 @@ use serde_json::json;
 use std::fs;
 use std::process::Command;
 
+pub fn get_current_time() -> Result<String> {
+    let output = Command::new("date")
+        .output()?;
+    let time_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    Ok(json!({
+        "current_time": time_str,
+        "timestamp": std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0)
+    }).to_string())
+}
+
 pub fn get_info_json() -> Result<String> {
     let mut distro = String::from("unknown");
     if let Ok(s) = fs::read_to_string("/etc/os-release") {

@@ -118,7 +118,7 @@ impl YeezyApp {
         
         // Position window at bottom-right corner before making visible
         let screen = ctx.screen_rect();
-        let window_size = egui::Vec2::new(320.0, 400.0);
+        let window_size = egui::Vec2::new(500.0, 650.0);
         let target_pos = screen.right_bottom() - window_size - egui::Vec2::new(20.0, 20.0);
         ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(target_pos));
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
@@ -624,7 +624,7 @@ impl eframe::App for YeezyApp {
                     ui.add_sized([ui.available_width(), 36.0], te);
 
                     ui.add_space(8.0);
-                    ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
+                    ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
                         let keep: Vec<_> = self.messages.iter().rev().take(10).cloned().collect();
                         for (role, text) in keep.iter().rev() {
                             let user = role == "user";
