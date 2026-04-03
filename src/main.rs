@@ -54,7 +54,22 @@ fn main() -> eframe::Result<()> {
     }
 
     let args: Vec<String> = std::env::args().collect();
-    let _daemon_flag = args.iter().any(|a| a == "--daemon");
+    let daemon_flag = args.iter().any(|a| a == "--daemon");
+
+    // If running as daemon, detach from parent and run independently
+    if daemon_flag {
+        if let Ok(child) = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(format!(
+                "exec setsid {} &",
+                args[0]
+            ))
+            .spawn()
+        {
+            let _ = child.wait_with_output();
+            return Ok(());
+        }
+    }
 
     let conn = match db::open_connection() {
         Ok(c) => Arc::new(Mutex::new(c)),
