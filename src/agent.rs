@@ -276,13 +276,20 @@ async fn try_cohere(
     info!("Cohere fallback: user_text len={}, history len={}", 
         job.user_text.len(), job.history.len());
 
-    // Cohere expects chat_history with user/assistant roles (NOT "system" role)
+    // Cohere expects chat_history with User/Chatbot roles (capitalized, NOT "user"/"assistant")
     let mut chat_history: Vec<Value> = vec![];
     for (role, content) in &job.history {
-        // Filter out system messages - Cohere doesn't support them in chat_history
-        if role != "system" && !content.is_empty() {
+        // Convert role names to Cohere format
+        let cohere_role = match role.as_str() {
+            "user" => "User",
+            "assistant" => "Chatbot",
+            "system" => continue, // Skip system messages in chat_history
+            other => other,
+        };
+        
+        if !content.is_empty() {
             chat_history.push(json!({
-                "role": role,
+                "role": cohere_role,
                 "message": content
             }));
         }
