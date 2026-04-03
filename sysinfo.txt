@@ -1,0 +1,6 @@
+Distro: Linux Mint 22.2
+Kernel: Linux version 6.17.0-19-generic (buildd@lcy02-amd64-019) (x86_64-linux-gnu-gcc-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, GNU ld (GNU Binutils for Ubuntu) 2.42) #19~24.04.2-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar  6 23:08:46 UTC 2
+CPU: Intel(R) Core(TM) i5-4210U CPU @ 1.70GHz
+RAM: 
+Disk: 
+Uptime: 
