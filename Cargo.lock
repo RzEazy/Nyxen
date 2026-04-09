@@ -2835,7 +2835,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "nyx"
+name = "nyxen"
 version = "0.1.0"
 dependencies = [
  "anyhow",

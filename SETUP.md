@@ -3,7 +3,7 @@
 ## Quick Start
 
 ### 1. Set Your API Keys in Settings
-Press **Ctrl+Space** to open Yeezy, click the **⚙ Settings** button:
+Press **Ctrl+Space** to open Nyxen, click the **⚙ Settings** button:
 - **Groq API key**: Get from https://console.groq.com
 - **Cohere API key** (optional): Get from https://cohere.com
 
@@ -15,7 +15,7 @@ In Settings, enter your system password under **🔐 System Access**:
 ### 3. Run as Independent Window
 Instead of running from terminal, use the daemon script:
 ```bash
-/home/Username/Desktop/yeezy/Nyxen-daemon.sh
+/home/Username/Desktop/Nyxen/Nyxen-daemon.sh
 ```
 
 Or run with daemon flag:
@@ -37,7 +37,7 @@ Or run with daemon flag:
 - **Customizable**: In Settings
 - Press to open/activate the window
 
-### System Access (What Yeezy Can Do)
+### System Access (What Nyxen Can Do)
 
 **Time & System Info**:
 - Ask "What time is it?"
@@ -93,7 +93,7 @@ Or run with daemon flag:
 ### Window Still Shows as Child/Dialog
 Make sure you're using daemon mode:
 ```bash
-/home/rzy/Desktop/yeezy/yeezy-daemon.sh
+/home/Userame"/Desktop/Nyxen/Nyxen-daemon.sh
 ```
 
 ### Package Installation Fails
@@ -121,7 +121,7 @@ Or allow all commands (⚠️ security risk):
 ```
 
 ### Hotkey Not Working
-- Check logs: `tail -f ~/.local/share/yeezy/yeezy.log`
+- Check logs: `tail -f ~/.local/share/nyxen/nyxen.log`
 - Verify hotkey isn't taken by another app
 - Try changing hotkey in Settings
 
@@ -136,18 +136,18 @@ Or allow all commands (⚠️ security risk):
 
 ### Command Line Flags
 ```bash
-yeezy                    # Run normally (attached to terminal)
-yeezy --daemon          # Run as independent daemon
+nyxen                    # Run normally (attached to terminal)
+nyxen --daemon          # Run as independent daemon
 ```
 
 ### Log Files
 ```bash
-tail -f ~/.local/share/yeezy/yeezy.log
+tail -f ~/.local/share/nyxen/nyxen.log
 ```
 
 ### Settings Database
 ```bash
-~/.local/share/yeezy/yeezy.db
+~/.local/share/nyxen/nyxen.db
 ```
 
 ### Custom Models

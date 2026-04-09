@@ -87,7 +87,7 @@ pub fn spawn_listener(
         );
     }
     info!("Voice wake-word stub: wake-word detection requires vosk model (see install.sh)");
-    info!("Press Ctrl+Space or click tray icon to open Yeezy");
+    info!("Press Ctrl+Space or click tray icon to open Nyxen");
 
     let stop = Arc::new(AtomicBool::new(false));
     let s = stop.clone();

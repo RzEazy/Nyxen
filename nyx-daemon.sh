@@ -1,6 +1,6 @@
 #!/bin/bash
-# Nyx Daemon Launcher
-# Runs Nyx as a completely independent floating window with no parent process
+# Nyxen Daemon Launcher
+# Runs Nyxen as a completely independent floating window with no parent process
 
 # Ensure DISPLAY and XAUTHORITY are set
 if [ -z "$DISPLAY" ]; then
@@ -11,12 +11,12 @@ if [ -z "$XAUTHORITY" ]; then
 fi
 
 # Get the actual binary path
-NYX_BIN="$(dirname "$0")/target/release/nyx"
-if [ ! -f "$NYX_BIN" ]; then
-    NYX_BIN="$(which nyx 2>/dev/null)"
+NYXEN_BIN="$(dirname "$0")/target/release/nyxen"
+if [ ! -f "$NYXEN_BIN" ]; then
+    NYXEN_BIN="$(which nyxen 2>/dev/null)"
 fi
 
-# Run Nyx with --daemon flag to detach from parent, preserving environment
-exec setsid env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" "$NYX_BIN" --daemon &
+# Run Nyxen with --daemon flag to detach from parent, preserving environment
+exec setsid env DISPLAY="$DISPLAY" XAUTHORITY="$XAUTHORITY" "$NYXEN_BIN" --daemon &
 disown
 exit 0

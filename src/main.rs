@@ -12,13 +12,13 @@
  */
 
 use eframe::egui::ViewportBuilder;
-use nyx::bridge::OrbBus;
-use nyx::config::Settings;
-use nyx::daemon;
-use nyx::db;
-use nyx::orb_state::OrbState;
-use nyx::tools::ConfirmRequest;
-use nyx::ui::main_window::{MenuCmd, YeezyApp};
+use nyxen::bridge::OrbBus;
+use nyxen::config::Settings;
+use nyxen::daemon;
+use nyxen::db;
+use nyxen::orb_state::OrbState;
+use nyxen::tools::ConfirmRequest;
+use nyxen::ui::main_window::{MenuCmd, YeezyApp};
 use parking_lot::Mutex;
 use std::sync::Arc;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
@@ -103,12 +103,12 @@ fn main() -> eframe::Result<()> {
 
     let hotkey_str = settings.lock().hotkey_display.clone();
     daemon::spawn_hotkey_thread(wake_tx.clone(), hotkey_str);
-    let _listen = nyx::voice::listener::spawn_listener(settings.clone(), wake_tx.clone());
+    let _listen = nyxen::voice::listener::spawn_listener(settings.clone(), wake_tx.clone());
 
     let orb = OrbBus::default();
     *orb.state.lock() = OrbState::Idle;
 
-    let app_title = "Nyx".to_string();
+    let app_title = "Nyxen".to_string();
     let window_width = settings.lock().window_width;
     let window_height = settings.lock().window_height;
 

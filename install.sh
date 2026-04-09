@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 PREFIX="${PREFIX:-/usr/local}"
 
-echo "==> Nyx installer"
+echo "==> Nyxen installer"
 
 if command -v apt-get >/dev/null 2>&1; then
   echo "Installing packages with apt-get (needs sudo)..."
@@ -60,7 +60,7 @@ if [[ ! -f "$DATA/assets/sounds/chime.wav" ]]; then
 fi
 cp -f "$DATA/assets/sounds/chime.wav" "$ROOT/assets/sounds/chime.wav" 2>/dev/null || true
 
-echo "==> Building Nyx"
+echo "==> Building Nyxen"
 (cd "$ROOT" && cargo build --release)
 
 sudo install -Dm755 "$ROOT/target/release/nyxen" "$PREFIX/bin/nyxen"
@@ -68,7 +68,7 @@ sudo install -Dm755 "$ROOT/target/release/nyxen" "$PREFIX/bin/nyxen"
 mkdir -p "$HOME/.config/systemd/user"
 cat > "$HOME/.config/systemd/user/nyxen.service" <<EOF
 [Unit]
-Description=Nyx AI Assistant
+Description=Nyxen AI Assistant
 After=graphical-session.target
 
 [Service]

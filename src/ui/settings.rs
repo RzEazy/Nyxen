@@ -43,7 +43,7 @@ impl SettingsUi {
         settings: &mut Settings,
         conn: &rusqlite::Connection,
     ) {
-        egui::Window::new("Nyx — Settings")
+        egui::Window::new("Nyxen — Settings")
             .open(open)
             .resizable(true)
             .default_width(720.0)
@@ -616,7 +616,7 @@ pub fn voice_tab(ui: &mut egui::Ui, settings: &mut Settings, conn: &rusqlite::Co
 
     if ui.button("Test voice").clicked() {
         let _ = crate::voice::speaker::speak_text_async(
-            "Nyx voice test.",
+            "Nyxen voice test.",
             settings,
             Arc::new(Mutex::new(0.0)),
         );
@@ -707,7 +707,7 @@ pub fn console_tab(ui: &mut egui::Ui, settings: &mut Settings, _conn: &rusqlite:
     static CONSOLE_INPUT: once_cell::sync::Lazy<parking_lot::Mutex<String>> =
         once_cell::sync::Lazy::new(|| parking_lot::Mutex::new(String::new()));
 
-    ui.label("Nyx Console — Direct shell access with sudo password");
+    ui.label("Nyxen Console — Direct shell access with sudo password");
     ui.label(
         RichText::new("Commands run with your stored sudo password if set.")
             .small()
@@ -795,7 +795,7 @@ fn run_console_command(cmd: &str, password: &str) -> String {
 }
 
 pub fn about_tab(ui: &mut egui::Ui, _settings: &Settings) {
-    ui.heading("Nyx");
+    ui.heading("Nyxen");
     ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
     ui.hyperlink("https://github.com/");
     ui.label("Multi-LLM support: Cohere, Groq, OpenAI, Anthropic. vosk + Piper run locally.");

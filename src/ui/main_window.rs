@@ -238,7 +238,7 @@ impl YeezyApp {
 
         self._tray = TrayIconBuilder::new()
             .with_menu(Box::new(menu))
-            .with_tooltip("Nyx")
+            .with_tooltip("Nyxen")
             .with_icon(icon)
             .build()
             .ok();
@@ -510,7 +510,7 @@ impl eframe::App for YeezyApp {
                     frame.show(ui, |ui| {
                         ui.set_width(300.0);
                         ui.vertical_centered(|ui| {
-                            ui.heading("Welcome to Nyx!");
+                            ui.heading("Welcome to Nyxen!");
                             ui.add_space(12.0);
                             ui.label("Enter your Groq API key to get started:");
                             ui.add_space(8.0);

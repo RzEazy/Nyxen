@@ -1,4 +1,4 @@
-//! Nyx core library — UI, agent orchestration, tools, voice, persistence.
+//! Nyxen core library — UI, agent orchestration, tools, voice, persistence.
 
 pub mod bridge;
 pub mod orb_state;
