@@ -1,4 +1,4 @@
-# Yeezy - Setup & Configuration Guide
+# Nyxen - Setup & Configuration Guide
 
 ## Quick Start
 
@@ -9,7 +9,7 @@ Press **Ctrl+Space** to open Yeezy, click the **⚙ Settings** button:
 
 ### 2. Set Your Sudo Password (For Package Installation)
 In Settings, enter your system password under **🔐 System Access**:
-- This allows Yeezy to install/remove packages automatically
+- This allows Nyxen to install/remove packages automatically
 - Password is stored locally (be cautious with shared systems)
 
 ### 3. Run as Independent Window
