@@ -15,12 +15,12 @@ In Settings, enter your system password under **🔐 System Access**:
 ### 3. Run as Independent Window
 Instead of running from terminal, use the daemon script:
 ```bash
-/home/rzy/Desktop/yeezy/yeezy-daemon.sh
+/home/Username/Desktop/yeezy/Nyxen-daemon.sh
 ```
 
 Or run with daemon flag:
 ```bash
-/home/rzy/Desktop/yeezy/target/release/yeezy --daemon
+/home/Username/Desktop/Nyxen/target/release/Nyxen --daemon
 ```
 
 **Why daemon mode?**
