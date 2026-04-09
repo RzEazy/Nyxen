@@ -25,7 +25,7 @@ pub fn default_tray_icon() -> Icon {
 }
 
 pub fn default_tray_icon_path() -> Option<String> {
-    let base = crate::db::yeezy_data_dir();
+    let base = crate::db::nyx_data_dir();
     let icon_path = base.join("assets/icon.png");
     if icon_path.exists() {
         Some(icon_path.to_string_lossy().into_owned())

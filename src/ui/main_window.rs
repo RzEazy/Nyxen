@@ -115,10 +115,12 @@ impl YeezyApp {
         self.overlay_target = 1.0;
         self.orb_logical = OrbState::Listening;
         *self.orb.state.lock() = OrbState::Listening;
-        
-        // Position window at bottom-right corner before making visible
+
+        // Position the native window using the configured size before showing it.
         let screen = ctx.screen_rect();
-        let window_size = egui::Vec2::new(500.0, 650.0);
+        let settings = self.settings.lock();
+        let window_size = egui::Vec2::new(settings.window_width, settings.window_height);
+        drop(settings);
         let target_pos = screen.right_bottom() - window_size - egui::Vec2::new(20.0, 20.0);
         ctx.send_viewport_cmd(egui::ViewportCommand::OuterPosition(target_pos));
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
@@ -130,6 +132,11 @@ impl YeezyApp {
         self.orb_logical = OrbState::Idle;
         *self.orb.state.lock() = OrbState::Idle;
         ctx.request_repaint();
+    }
+
+    fn minimize_to_tray(&mut self, ctx: &egui::Context) {
+        self.show_settings = false;
+        self.hide_overlay(ctx);
     }
 
     fn spawn_agent(&mut self, user: String) {
@@ -169,13 +176,22 @@ impl YeezyApp {
         });
     }
 
+    fn submit_draft(&mut self) {
+        let text = self.draft.trim().to_string();
+        if text.is_empty() {
+            return;
+        }
+        self.draft.clear();
+        self.spawn_agent(text);
+    }
+
     fn poll_wake(&mut self, ctx: &egui::Context) {
         while let Ok(ev) = self.wake_rx.try_recv() {
             match ev.as_str() {
                 "__WAKE__" | "__HOTKEY__" => {
                     self.activate_overlay(ctx);
                     if self.settings.lock().chime_on_activation {
-                        let chime = crate::db::yeezy_data_dir().join("assets/sounds/chime.wav");
+                        let chime = crate::db::nyx_data_dir().join("assets/sounds/chime.wav");
                         let _ = std::process::Command::new("paplay")
                             .arg(&chime)
                             .spawn()
@@ -214,7 +230,6 @@ impl YeezyApp {
         use tray_icon::{TrayIconBuilder, TrayIconEvent};
 
         let icon = tray::default_tray_icon();
-        let name = self.settings.lock().app_name.clone();
         let menu = Menu::new();
         let _ = menu.append(&MenuItem::with_id("open", "Open", true, None));
         let _ = menu.append(&MenuItem::with_id("settings", "Settings", true, None));
@@ -223,7 +238,7 @@ impl YeezyApp {
 
         self._tray = TrayIconBuilder::new()
             .with_menu(Box::new(menu))
-            .with_tooltip(&name)
+            .with_tooltip("Nyx")
             .with_icon(icon)
             .build()
             .ok();
@@ -385,6 +400,7 @@ impl YeezyApp {
                             ("Appearance", Tab::Appearance),
                             ("Voice", Tab::Voice),
                             ("Agent", Tab::Agent),
+                            ("Console", Tab::Console),
                             ("About", Tab::About),
                         ] {
                             let is_selected = match (&self.settings_ui.tab, t) {
@@ -392,6 +408,7 @@ impl YeezyApp {
                                 (Tab::Appearance, Tab::Appearance) => true,
                                 (Tab::Voice, Tab::Voice) => true,
                                 (Tab::Agent, Tab::Agent) => true,
+                                (Tab::Console, Tab::Console) => true,
                                 (Tab::About, Tab::About) => true,
                                 _ => false,
                             };
@@ -409,7 +426,11 @@ impl YeezyApp {
 
                     self.settings_ui.t_preview += ctx.input(|i| i.predicted_dt) as f32;
                     match self.settings_ui.tab {
-                        Tab::General => settings::general_tab(ui, &mut self.settings.lock(), &mut self.conn.lock()),
+                        Tab::General => settings::general_tab(
+                            ui,
+                            &mut self.settings.lock(),
+                            &mut self.conn.lock(),
+                        ),
                         Tab::Appearance => settings::appearance_tab(
                             ui,
                             &mut self.settings.lock(),
@@ -417,22 +438,35 @@ impl YeezyApp {
                             &mut self.settings_ui.preview_orb_state,
                             self.settings_ui.t_preview,
                         ),
-                        Tab::Voice => settings::voice_tab(ui, &mut self.settings.lock(), &mut self.conn.lock()),
-                        Tab::Agent => settings::agent_tab(ui, &mut self.settings.lock(), &mut self.conn.lock()),
+                        Tab::Voice => settings::voice_tab(
+                            ui,
+                            &mut self.settings.lock(),
+                            &mut self.conn.lock(),
+                        ),
+                        Tab::Agent => settings::agent_tab(
+                            ui,
+                            &mut self.settings.lock(),
+                            &mut self.conn.lock(),
+                        ),
+                        Tab::Console => settings::console_tab(
+                            ui,
+                            &mut self.settings.lock(),
+                            &mut self.conn.lock(),
+                        ),
                         Tab::About => settings::about_tab(ui, &self.settings.lock()),
                     }
                 });
             });
 
         if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
-            self.show_settings = false;
+            self.minimize_to_tray(ctx);
         }
     }
 }
 
 impl eframe::App for YeezyApp {
     fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
-        [0.1, 0.1, 0.1, 1.0]
+        [0.0, 0.0, 0.0, 0.0]
     }
 
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -476,14 +510,14 @@ impl eframe::App for YeezyApp {
                     frame.show(ui, |ui| {
                         ui.set_width(300.0);
                         ui.vertical_centered(|ui| {
-                            ui.heading("Welcome to Yeezy!");
+                            ui.heading("Welcome to Nyx!");
                             ui.add_space(12.0);
                             ui.label("Enter your Groq API key to get started:");
                             ui.add_space(8.0);
                             ui.add(
                                 egui::TextEdit::singleline(&mut self.settings.lock().groq_api_key)
                                     .desired_width(320.0)
-                                    .hint_text("gsk_..."),
+                                    .hint_text("Groq API key..."),
                             );
                             ui.add_space(16.0);
                             if ui.button("Save & Continue").clicked()
@@ -561,23 +595,24 @@ impl eframe::App for YeezyApp {
             palette = s.effective_palette();
         }
 
-        let fill = crate::ui::settings::orb_hex(&palette.background).gamma_multiply(opacity * 0.92);
+        let _fill =
+            crate::ui::settings::orb_hex(&palette.background).gamma_multiply(opacity * 0.92);
 
         let scale = 0.0 + 1.0 * self.overlay_t;
         let screen = ctx.screen_rect();
-        let base = Vec2::new(320.0, 400.0) * scale;
+        let base = Vec2::new(600.0, 700.0) * scale;
 
-        let target_pos = screen.right_bottom() - Vec2::new(base.x + 20.0, base.y + 20.0);
-        let start_pos = screen.right_bottom() + Vec2::new(50.0, 0.0);
-        let pos = start_pos.lerp(target_pos, self.overlay_t);
-        
+        // Center in window
+        let center = screen.center();
+        let pos = center - base / 2.0;
+
         egui::Area::new(egui::Id::new("yeezy_overlay"))
             .order(egui::Order::Foreground)
-            .movable(false)
+            .movable(true)
             .current_pos(pos)
             .show(ctx, |ui| {
                 let frame = egui::Frame::none()
-                    .fill(fill)
+                    .fill(egui::Color32::TRANSPARENT)
                     .stroke(Stroke::new(
                         1.0,
                         crate::ui::settings::orb_hex(&palette.border).gamma_multiply(opacity),
@@ -615,50 +650,68 @@ impl eframe::App for YeezyApp {
                     });
 
                     ui.add_space(10.0);
-                    let te = egui::TextEdit::singleline(&mut self.draft)
-                        .hint_text(
-                            RichText::new("Ask anything...")
-                                .color(crate::ui::settings::orb_hex(&palette.text_muted)),
-                        )
-                        .desired_width(f32::INFINITY);
-                    ui.add_sized([ui.available_width(), 36.0], te);
-
-                    ui.add_space(8.0);
-                    ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
-                        let keep: Vec<_> = self.messages.iter().rev().take(10).cloned().collect();
-                        for (role, text) in keep.iter().rev() {
-                            let user = role == "user";
-                            ui.horizontal(|ui| {
-                                if user {
-                                    ui.with_layout(
-                                        egui::Layout::right_to_left(egui::Align::Min),
-                                        |ui| {
-                                            bubble(ui, user, &palette, role, text);
-                                        },
-                                    );
-                                } else {
-                                    bubble(ui, user, &palette, role, text);
-                                }
-                            });
-                            ui.add_space(6.0);
-                        }
-                        if !self.stream_buf.is_empty() {
-                            bubble(ui, false, &palette, "assistant", &self.stream_buf);
-                        }
-                    });
+                    ScrollArea::vertical()
+                        .max_height(420.0)
+                        .stick_to_bottom(true)
+                        .show(ui, |ui| {
+                            let keep: Vec<_> =
+                                self.messages.iter().rev().take(10).cloned().collect();
+                            for (role, text) in keep.iter().rev() {
+                                let user = role == "user";
+                                ui.horizontal(|ui| {
+                                    if user {
+                                        ui.with_layout(
+                                            egui::Layout::right_to_left(egui::Align::Min),
+                                            |ui| {
+                                                bubble(ui, user, &palette, role, text);
+                                            },
+                                        );
+                                    } else {
+                                        bubble(ui, user, &palette, role, text);
+                                    }
+                                });
+                                ui.add_space(6.0);
+                            }
+                            if !self.stream_buf.is_empty() {
+                                bubble(ui, false, &palette, "assistant", &self.stream_buf);
+                            }
+                        });
 
                     ui.add_space(10.0);
+                    ui.label(
+                        RichText::new("Enter to send, Shift+Enter for a new line.")
+                            .small()
+                            .weak(),
+                    );
+                    let input = egui::TextEdit::multiline(&mut self.draft)
+                        .hint_text(
+                            RichText::new(
+                                "Ask anything, or tell it to open apps and create files...",
+                            )
+                            .color(crate::ui::settings::orb_hex(&palette.text_muted)),
+                        )
+                        .desired_width(f32::INFINITY)
+                        .desired_rows(3)
+                        .lock_focus(true);
+                    let input_resp = ui.add_sized([ui.available_width(), 72.0], input);
+                    let submit_by_enter = input_resp.has_focus()
+                        && ui.input(|i| i.key_pressed(egui::Key::Enter) && !i.modifiers.shift);
+                    if submit_by_enter {
+                        self.submit_draft();
+                    }
+
+                    ui.add_space(8.0);
                     ui.horizontal(|ui| {
                         let mic = if self.mic_on { "Mic: on" } else { "Mic: off" };
                         if ui.button(mic).clicked() {
                             self.mic_on = !self.mic_on;
                         }
                         if ui.button("Send").clicked() {
-                            let d = self.draft.trim().to_string();
-                            if !d.is_empty() {
-                                self.draft.clear();
-                                self.spawn_agent(d);
-                            }
+                            self.submit_draft();
+                        }
+                        if ui.button("Clear Chat").clicked() {
+                            self.messages.clear();
+                            self.stream_buf.clear();
                         }
                         if ui.button("⚙").on_hover_text("Settings").clicked() {
                             self.show_settings = true;
@@ -668,7 +721,7 @@ impl eframe::App for YeezyApp {
             });
 
         if ctx.input(|i| i.key_pressed(egui::Key::Escape)) {
-            self.show_settings = false;
+            self.minimize_to_tray(ctx);
         }
     }
 }
@@ -701,6 +754,6 @@ fn bubble(
         .inner_margin(Margin::symmetric(10.0, 8.0));
     frame.show(ui, |ui| {
         ui.label(RichText::new(role).small().weak());
-        ui.label(RichText::new(text).color(fg));
+        ui.add(egui::Label::new(RichText::new(text).color(fg)).wrap());
     });
 }

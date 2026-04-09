@@ -1,50 +1,90 @@
-# Yeezy
+# Nyxen
 
-Linux AI assistant overlay powered by **Groq** (streaming `llama-3.3-70b-versatile` and friends), with optional local **Piper** / **espeak-ng** TTS, **SQLite** history, and system tools (shell, files, browser, packages, sysinfo).
+A powerful Linux AI assistant with an elegant overlay UI, powered by Groq's fast LLMs.
 
-## Stack
+## Features
 
-Rust **egui/eframe**: single native binary, GPU-accelerated UI, custom **epaint** orb (see the comment block in `src/main.rs`).
+- **AI-Powered Assistant**: Powered by Groq (Llama 3.3 70B), with support for OpenAI, Cohere, and Anthropic
+- **Voice Input**: Vosk-based wake word detection with Piper TTS
+- **System Integration**: Execute shell commands, manage files, open apps, install packages
+- **Beautiful UI**: Custom orb animation with multiple color themes (Monochrome, Dracula, Nord, Catppuccin, Solarized Dark)
+- **System Tray**: Runs in background with tray menu
+- **Global Hotkey**: Quick access overlay (default: Ctrl+Space)
 
-## Build
+## Requirements
 
-**System packages** (Debian/Ubuntu example):
+- Linux (X11 or Wayland)
+- Rust toolchain
+- System packages:
+  - GTK3
+  - libsqlite3-dev
+  - libxdo-dev
+  - libappindicator3-dev
+  - espeak-ng
+  - ffmpeg
+  - alsa-utils or pulseaudio-utils
+
+## Installation
+
+### Quick Install
 
 ```bash
-sudo apt install build-essential pkg-config libssl-dev libgtk-3-dev libxdo-dev \
-  libsqlite3-dev libayatana-appindicator3-dev espeak-ng ffmpeg
-```
-
-Then:
-
-```bash
-./build.sh        # release binary → ./yeezy-bin
-# or
-cargo build --release && ./target/release/yeezy
-```
-
-`build.rs` adds a `libxdo.so` symlink when only `libxdo.so.*` is installed so linking works without `libxdo-dev`.
-
-## Install (user systemd + models)
-
-```bash
+git clone https://github.com/RzEazy/Nyxen.git
+cd Nyxen
 chmod +x install.sh build.sh
 ./install.sh
 ```
 
-This downloads the **Vosk** small English model and a **Piper** voice under `~/.local/share/yeezy/models/`, installs the binary to `/usr/local/bin/yeezy`, and enables `systemd --user` service `yeezy.service`.
+This will:
+1. Install required system packages
+2. Download Vosk and Piper voice models
+3. Build the release binary
+4. Install to `/usr/local/bin/nyx`
+5. Set up systemd user service for auto-start
+6. Create desktop entry
+
+### Manual Build
+
+```bash
+# Install dependencies (Debian/Ubuntu)
+sudo apt install build-essential pkg-config libssl-dev libgtk-3-dev libxdo-dev \
+  libsqlite3-dev libayatana-appindicator3-dev espeak-ng ffmpeg
+
+# Build
+cargo build --release
+
+# Run
+./target/release/nyx
+```
+
+## Configuration
+
+On first run, you'll be prompted to enter your Groq API key. Get one free at https://console.groq.com/
+
+Settings are stored in `~/.local/share/nyx/nyx.db` and can be configured via the Settings UI:
+- **General**: Wake word, hotkey, startup options
+- **Appearance**: Color themes, orb size, window opacity
+- **Voice**: TTS settings, wake sensitivity
+- **Agent**: API keys for different providers, model selection
 
 ## Usage
 
-- **Super+Y**: global shortcut (X11; Wayland varies).
-- **Tray**: left-click opens overlay; menu for settings/quit.
-- **First run**: set Groq API key in the welcome dialog.
-- **Settings**: tabs for General, Appearance (live orb/chat preview), Voice, Agent, About — persisted to `~/.local/share/yeezy/yeezy.db`.
+- **Ctrl+Space**: Open/close overlay (X11 global hotkey)
+- **Tray icon**: Left-click to open, right-click for menu
+- **Voice wake word**: Say "hey nyx" (if enabled)
 
-## Voice / wake word
+## System Tray
 
-The current `vosk` Rust dependency is **not** linked by default (avoids hard `libvosk` requirement). `voice/listener.rs` is a **stub**; after `install.sh` you still have models on disk — wire the `vosk` crate back in when `libvosk` is available, or patch `listener.rs` accordingly.
+The app runs in the system tray. Use the tray menu to:
+- Show/Hide the main window
+- Access Settings
+- Quit the application
+
+## Logs
+
+- Application logs: `~/.local/share/nyx/nyx.log`
+- Database: `~/.local/share/nyx/nyx.db`
 
 ## License
 
-MIT or your choice — project scaffold for local use.
+MIT

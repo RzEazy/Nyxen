@@ -1,4 +1,4 @@
-//! Yeezy core library — UI, agent orchestration, tools, voice, persistence.
+//! Nyx core library — UI, agent orchestration, tools, voice, persistence.
 
 pub mod bridge;
 pub mod orb_state;

@@ -109,7 +109,7 @@ fn parse_hotkey(s: &str) -> Result<(HotKey, u32), String> {
 }
 
 pub fn default_model_paths() -> (String, String) {
-    let base = crate::db::yeezy_data_dir().join("models");
+    let base = crate::db::nyx_data_dir().join("models");
     let vosk = base
         .join("vosk")
         .join("vosk-model-small-en-us-0.15")

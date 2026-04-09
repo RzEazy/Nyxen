@@ -13,6 +13,31 @@ pub enum PalettePreset {
     Custom,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum LlmProvider {
+    Groq,
+    Cohere,
+    OpenAI,
+    Anthropic,
+}
+
+impl LlmProvider {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            LlmProvider::Groq => "Groq",
+            LlmProvider::Cohere => "Cohere",
+            LlmProvider::OpenAI => "OpenAI",
+            LlmProvider::Anthropic => "Anthropic",
+        }
+    }
+}
+
+impl Default for LlmProvider {
+    fn default() -> Self {
+        LlmProvider::Groq
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ColorPalette {
     pub background: String,
@@ -153,15 +178,18 @@ impl LanguageStyle {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Settings {
-    pub app_name: String,
     pub wake_word: String,
     pub hotkey_modifiers: u32, // raw global-hotkey flags for restore — simplified: store string
     pub hotkey_display: String,
     pub groq_api_key: String,
     pub groq_model: String,
-    pub use_cohere_backup: bool,
+    pub primary_provider: LlmProvider,
     pub cohere_api_key: String,
     pub cohere_model: String,
+    pub openai_api_key: String,
+    pub openai_model: String,
+    pub anthropic_api_key: String,
+    pub anthropic_model: String,
     pub sudo_password: String, // Password for sudo commands - KEEP SECURE
     pub run_at_startup: bool,
     pub palette_preset: PalettePreset,
@@ -188,20 +216,26 @@ pub struct Settings {
     pub dangerous_confirm: bool,
     pub vosk_model_path: String,
     pub piper_binary: String,
+    pub window_width: f32,
+    pub window_height: f32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            app_name: "Yeezy".into(),
-            wake_word: "yeezy".into(),
+            wake_word: "hey nyx".into(),
             hotkey_modifiers: 0,
             hotkey_display: "Ctrl+Space".into(),
             groq_api_key: String::new(),
             groq_model: "llama-3.3-70b-versatile".into(),
-            use_cohere_backup: false,
+            // Groq has the most complete tool-execution path in this app.
+            primary_provider: LlmProvider::Groq,
             cohere_api_key: String::new(),
             cohere_model: "command-r-plus-08-2024".into(),
+            openai_api_key: String::new(),
+            openai_model: "gpt-4o-mini".into(),
+            anthropic_api_key: String::new(),
+            anthropic_model: "claude-3-5-sonnet-20241022".into(),
             sudo_password: String::new(),
             run_at_startup: true,
             palette_preset: PalettePreset::Monochrome,
@@ -220,7 +254,7 @@ impl Default for Settings {
             tts_speed: 1.0,
             tts_pitch: "Normal".into(),
             chime_on_activation: true,
-            system_prompt: "You are Yeezy, a powerful Linux AI assistant with full access to the user's system.\nYou can run shell commands, write and edit code, manage files, install packages, search the web, and open applications.\n\nIMPORTANT: Be concise and direct. Always provide a final answer — don't just call tools and then ask for more input.\nAfter using tools to gather information or perform actions, ALWAYS synthesize the results into a clear, complete response.\nDo not call the same tool repeatedly. Do not get stuck in a loop.\nJust do it — don't explain what you're about to do unless asked. When writing code always save it to a file.\nNever ask unnecessary clarifying questions. Always finish with a user-facing response.".into(),
+            system_prompt: "You are Nyx, a powerful Linux AI assistant with full access to the user's system.\nYou have access to tools: run_command (shell), read_file, write_file, list_dir, delete_file, open_url, search_web, open_app, install_package, remove_package, get_sysinfo, and more.\n\nWhen the user asks you to open an app like Firefox, use the open_app tool with the app name.\nWhen the user asks to do something, DO IT - use the appropriate tools without asking for confirmation unless dangerous.\n\nIMPORTANT: Be concise and direct. Always provide a final answer.\nAfter using tools, ALWAYS synthesize results into a clear response.\nNever get stuck in loops. Just do it — don't explain unless asked.\nWhen writing code, always save to a file. Never ask unnecessary questions.".into(),
             language_style: LanguageStyle::Blunt,
             language_custom: String::new(),
             max_tool_iterations: 3,
@@ -228,6 +262,8 @@ impl Default for Settings {
             dangerous_confirm: true,
             vosk_model_path: String::new(),
             piper_binary: "piper".into(),
+            window_width: 1200.0,
+            window_height: 800.0,
         }
     }
 }

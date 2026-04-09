@@ -15,6 +15,7 @@ pub enum Tab {
     Appearance,
     Voice,
     Agent,
+    Console,
     About,
 }
 
@@ -42,8 +43,7 @@ impl SettingsUi {
         settings: &mut Settings,
         conn: &rusqlite::Connection,
     ) {
-        let name = settings.app_name.clone();
-        egui::Window::new(format!("{} — Settings", name))
+        egui::Window::new("Nyx — Settings")
             .open(open)
             .resizable(true)
             .default_width(720.0)
@@ -54,6 +54,7 @@ impl SettingsUi {
                         ("Appearance", Tab::Appearance),
                         ("Voice", Tab::Voice),
                         ("Agent", Tab::Agent),
+                        ("Console", Tab::Console),
                         ("About", Tab::About),
                     ] {
                         if ui.selectable_label(self.tab == t, label).clicked() {
@@ -75,6 +76,7 @@ impl SettingsUi {
                     ),
                     Tab::Voice => voice_tab(ui, settings, conn),
                     Tab::Agent => agent_tab(ui, settings, conn),
+                    Tab::Console => console_tab(ui, settings, conn),
                     Tab::About => about_tab(ui, settings),
                 }
             });
@@ -89,18 +91,15 @@ pub fn general_tab(ui: &mut egui::Ui, settings: &mut Settings, conn: &rusqlite::
     ui.label(RichText::new("All changes save to SQLite immediately.").small());
     ui.add_space(8.0);
     ui.horizontal(|ui| {
-        ui.label("Assistant name:");
-        if ui.text_edit_singleline(&mut settings.app_name).changed() {
-            save(settings, conn);
-        }
-    });
-    ui.horizontal(|ui| {
         ui.label("Wake word:");
         if ui.text_edit_singleline(&mut settings.wake_word).changed() {
             save(settings, conn);
         }
     });
-    ui.label("Keyboard shortcut: Super+Y (global; editable capture planned)");
+    ui.label(format!(
+        "Keyboard shortcut: {} (global; editable capture planned)",
+        settings.hotkey_display
+    ));
     ui.horizontal(|ui| {
         ui.label("Groq API key:");
         if ui
@@ -136,41 +135,161 @@ pub fn general_tab(ui: &mut egui::Ui, settings: &mut Settings, conn: &rusqlite::
             });
     });
     ui.add_space(8.0);
-    ui.checkbox(&mut settings.use_cohere_backup, "Use Cohere as backup");
-    if settings.use_cohere_backup {
-        ui.horizontal(|ui| {
-            ui.label("Cohere API key:");
-            if ui
-                .add(
-                    egui::TextEdit::singleline(&mut settings.cohere_api_key)
-                        .desired_width(280.0)
-                        .password(true),
-                )
-                .changed()
-            {
-                save(settings, conn);
-            }
-        });
-        ui.horizontal(|ui| {
-            ui.label("Cohere model:");
-            egui::ComboBox::from_id_salt("cohere_model_pick")
-                .selected_text(settings.cohere_model.clone())
-                .show_ui(ui, |ui| {
-                    for m in [
-                        "command-r-plus-08-2024",
-                        "command-r-08-2024",
-                        "command-r-plus",
-                    ] {
-                        if ui
-                            .selectable_value(&mut settings.cohere_model, m.into(), m)
-                            .changed()
-                        {
-                            save(settings, conn);
-                        }
+
+    ui.label("Primary LLM Provider:");
+    ui.horizontal(|ui| {
+        egui::ComboBox::from_id_salt("llm_provider_pick")
+            .selected_text(match settings.primary_provider {
+                crate::config::LlmProvider::Groq => "Groq",
+                crate::config::LlmProvider::Cohere => "Cohere",
+                crate::config::LlmProvider::OpenAI => "OpenAI",
+                crate::config::LlmProvider::Anthropic => "Anthropic",
+            })
+            .show_ui(ui, |ui| {
+                if ui
+                    .selectable_value(
+                        &mut settings.primary_provider,
+                        crate::config::LlmProvider::Groq,
+                        "Groq (Recommended - full tool support)",
+                    )
+                    .changed()
+                {
+                    save(settings, conn);
+                }
+                if ui
+                    .selectable_value(
+                        &mut settings.primary_provider,
+                        crate::config::LlmProvider::Cohere,
+                        "Cohere (chat-focused, limited automation)",
+                    )
+                    .changed()
+                {
+                    save(settings, conn);
+                }
+                if ui
+                    .selectable_value(
+                        &mut settings.primary_provider,
+                        crate::config::LlmProvider::OpenAI,
+                        "OpenAI (partial tool support in this build)",
+                    )
+                    .changed()
+                {
+                    save(settings, conn);
+                }
+                if ui
+                    .selectable_value(
+                        &mut settings.primary_provider,
+                        crate::config::LlmProvider::Anthropic,
+                        "Anthropic (chat-focused, limited automation)",
+                    )
+                    .changed()
+                {
+                    save(settings, conn);
+                }
+            });
+    });
+    ui.label(
+        RichText::new("For opening apps, creating files, and other system actions, keep Groq as the primary provider.")
+            .small()
+            .weak(),
+    );
+
+    ui.add_space(8.0);
+    ui.horizontal(|ui| {
+        ui.label("Cohere API key:");
+        if ui
+            .add(
+                egui::TextEdit::singleline(&mut settings.cohere_api_key)
+                    .desired_width(280.0)
+                    .password(true),
+            )
+            .changed()
+        {
+            save(settings, conn);
+        }
+    });
+    ui.horizontal(|ui| {
+        ui.label("Cohere model:");
+        egui::ComboBox::from_id_salt("cohere_model_pick")
+            .selected_text(settings.cohere_model.clone())
+            .show_ui(ui, |ui| {
+                for m in [
+                    "command-r-plus-08-2024",
+                    "command-r-08-2024",
+                    "command-r-plus",
+                ] {
+                    if ui
+                        .selectable_value(&mut settings.cohere_model, m.into(), m)
+                        .changed()
+                    {
+                        save(settings, conn);
                     }
-                });
-        });
-    }
+                }
+            });
+    });
+    ui.add_space(8.0);
+    ui.horizontal(|ui| {
+        ui.label("OpenAI API key:");
+        if ui
+            .add(
+                egui::TextEdit::singleline(&mut settings.openai_api_key)
+                    .desired_width(280.0)
+                    .password(true),
+            )
+            .changed()
+        {
+            save(settings, conn);
+        }
+    });
+    ui.horizontal(|ui| {
+        ui.label("OpenAI model:");
+        egui::ComboBox::from_id_salt("openai_model_pick")
+            .selected_text(settings.openai_model.clone())
+            .show_ui(ui, |ui| {
+                for m in ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"] {
+                    if ui
+                        .selectable_value(&mut settings.openai_model, m.into(), m)
+                        .changed()
+                    {
+                        save(settings, conn);
+                    }
+                }
+            });
+    });
+    ui.add_space(8.0);
+    ui.horizontal(|ui| {
+        ui.label("Anthropic API key:");
+        if ui
+            .add(
+                egui::TextEdit::singleline(&mut settings.anthropic_api_key)
+                    .desired_width(280.0)
+                    .password(true),
+            )
+            .changed()
+        {
+            save(settings, conn);
+        }
+    });
+    ui.horizontal(|ui| {
+        ui.label("Anthropic model:");
+        egui::ComboBox::from_id_salt("anthropic_model_pick")
+            .selected_text(settings.anthropic_model.clone())
+            .show_ui(ui, |ui| {
+                for m in [
+                    "claude-3-5-sonnet-20241022",
+                    "claude-3-5-haiku-20240307",
+                    "claude-3-opus-20240229",
+                    "claude-3-sonnet-20240229",
+                ] {
+                    if ui
+                        .selectable_value(&mut settings.anthropic_model, m.into(), m)
+                        .changed()
+                    {
+                        save(settings, conn);
+                    }
+                }
+            });
+    });
     ui.add_space(12.0);
     ui.label("🔐 System Access");
     ui.horizontal(|ui| {
@@ -188,6 +307,37 @@ pub fn general_tab(ui: &mut egui::Ui, settings: &mut Settings, conn: &rusqlite::
     });
     ui.label(
         RichText::new("Password is stored locally and used to run sudo commands automatically")
+            .small()
+            .weak(),
+    );
+    ui.add_space(12.0);
+    ui.label("📐 Window Settings");
+    ui.horizontal(|ui| {
+        ui.label("Window width:");
+        if ui
+            .add(egui::Slider::new(
+                &mut settings.window_width,
+                400.0..=3840.0,
+            ))
+            .changed()
+        {
+            save(settings, conn);
+        }
+    });
+    ui.horizontal(|ui| {
+        ui.label("Window height:");
+        if ui
+            .add(egui::Slider::new(
+                &mut settings.window_height,
+                300.0..=2160.0,
+            ))
+            .changed()
+        {
+            save(settings, conn);
+        }
+    });
+    ui.label(
+        RichText::new("Window will update on next launch")
             .small()
             .weak(),
     );
@@ -466,7 +616,7 @@ pub fn voice_tab(ui: &mut egui::Ui, settings: &mut Settings, conn: &rusqlite::Co
 
     if ui.button("Test voice").clicked() {
         let _ = crate::voice::speaker::speak_text_async(
-            "Yeezy voice test.",
+            "Nyx voice test.",
             settings,
             Arc::new(Mutex::new(0.0)),
         );
@@ -549,9 +699,104 @@ pub fn agent_tab(ui: &mut egui::Ui, settings: &mut Settings, conn: &rusqlite::Co
     }
 }
 
-pub fn about_tab(ui: &mut egui::Ui, settings: &Settings) {
-    ui.heading(format!("{}", settings.app_name));
+pub fn console_tab(ui: &mut egui::Ui, settings: &mut Settings, _conn: &rusqlite::Connection) {
+    use egui::ScrollArea;
+
+    static CONSOLE_OUTPUT: once_cell::sync::Lazy<parking_lot::Mutex<String>> =
+        once_cell::sync::Lazy::new(|| parking_lot::Mutex::new(String::new()));
+    static CONSOLE_INPUT: once_cell::sync::Lazy<parking_lot::Mutex<String>> =
+        once_cell::sync::Lazy::new(|| parking_lot::Mutex::new(String::new()));
+
+    ui.label("Nyx Console — Direct shell access with sudo password");
+    ui.label(
+        RichText::new("Commands run with your stored sudo password if set.")
+            .small()
+            .weak(),
+    );
+    ui.add_space(8.0);
+
+    let cmd_input = {
+        let input = CONSOLE_INPUT.lock();
+        input.clone()
+    };
+    let mut cmd_input = cmd_input;
+
+    ui.horizontal(|ui| {
+        ui.label("$ ");
+        ui.add_sized(
+            [ui.available_width() - 30.0, 24.0],
+            egui::TextEdit::singleline(&mut cmd_input).hint_text("Enter command..."),
+        );
+    });
+
+    if ui.button("Run").clicked() || ui.input(|i| i.key_pressed(egui::Key::Enter)) {
+        if !cmd_input.trim().is_empty() {
+            let result = run_console_command(&cmd_input, &settings.sudo_password);
+            {
+                let mut output = CONSOLE_OUTPUT.lock();
+                output.push_str(&format!("$ {}\n{}\n\n", cmd_input, result));
+            }
+            {
+                let mut input = CONSOLE_INPUT.lock();
+                *input = cmd_input.clone();
+            }
+        }
+    }
+
+    if ui.button("Clear").clicked() {
+        let mut output = CONSOLE_OUTPUT.lock();
+        output.clear();
+    }
+
+    ui.separator();
+
+    let output = CONSOLE_OUTPUT.lock();
+    let output_text = output.clone();
+
+    ScrollArea::vertical()
+        .max_height(350.0)
+        .show(ui, |ui: &mut egui::Ui| {
+            ui.add(
+                egui::Label::new(
+                    RichText::new(&output_text)
+                        .family(egui::FontFamily::Monospace)
+                        .size(13.0),
+                )
+                .wrap(),
+            );
+        });
+}
+
+fn run_console_command(cmd: &str, password: &str) -> String {
+    use std::process::Command;
+
+    let output = if !password.is_empty() {
+        let escaped = password.replace("'", "'\\''");
+        Command::new("sh")
+            .arg("-c")
+            .arg(format!("echo '{}' | sudo -S {} 2>&1", escaped, cmd))
+            .output()
+    } else {
+        Command::new("sh").arg("-c").arg(cmd).output()
+    };
+
+    match output {
+        Ok(out) => {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            if out.status.success() {
+                stdout.to_string()
+            } else {
+                format!("{}\n{}", stdout, stderr)
+            }
+        }
+        Err(e) => format!("Error: {}", e),
+    }
+}
+
+pub fn about_tab(ui: &mut egui::Ui, _settings: &Settings) {
+    ui.heading("Nyx");
     ui.label(format!("Version {}", env!("CARGO_PKG_VERSION")));
     ui.hyperlink("https://github.com/");
-    ui.label("Groq API powers the agent loop; vosk + Piper run locally.");
+    ui.label("Multi-LLM support: Cohere, Groq, OpenAI, Anthropic. vosk + Piper run locally.");
 }

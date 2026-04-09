@@ -7,21 +7,21 @@ use tracing::error;
 
 use crate::config::{ColorPalette, LanguageStyle, PalettePreset, Settings};
 
-pub fn yeezy_data_dir() -> PathBuf {
+pub fn nyx_data_dir() -> PathBuf {
     let base = dirs::data_local_dir().unwrap_or_else(|| PathBuf::from("."));
-    base.join("yeezy")
+    base.join("nyxen")
 }
 
 pub fn db_path() -> PathBuf {
-    yeezy_data_dir().join("yeezy.db")
+    nyx_data_dir().join("nyx.db")
 }
 
 pub fn log_path() -> PathBuf {
-    yeezy_data_dir().join("yeezy.log")
+    nyx_data_dir().join("nyx.log")
 }
 
 pub fn open_connection() -> Result<Connection> {
-    let dir = yeezy_data_dir();
+    let dir = nyx_data_dir();
     fs::create_dir_all(&dir).with_context(|| format!("create data dir {:?}", dir))?;
     let path = db_path();
     let conn = Connection::open(&path).with_context(|| format!("open db {:?}", path))?;
@@ -57,15 +57,50 @@ fn get_setting(conn: &Connection, key: &str) -> Result<Option<String>> {
 
 pub fn load_settings(conn: &Connection) -> Result<Settings> {
     let mut s = Settings::default();
-    if let Some(v) = get_setting(conn, "app_name")? { s.app_name = v; }
-    if let Some(v) = get_setting(conn, "wake_word")? { s.wake_word = v; }
-    if let Some(v) = get_setting(conn, "hotkey_display")? { s.hotkey_display = v; }
-    if let Some(v) = get_setting(conn, "groq_api_key")? { s.groq_api_key = v; }
-    if let Some(v) = get_setting(conn, "groq_model")? { s.groq_model = v; }
-    if let Some(v) = get_setting(conn, "use_cohere_backup")? { s.use_cohere_backup = v == "1"; }
-    if let Some(v) = get_setting(conn, "cohere_api_key")? { s.cohere_api_key = v; }
-    if let Some(v) = get_setting(conn, "cohere_model")? { s.cohere_model = v; }
-    if let Some(v) = get_setting(conn, "run_at_startup")? { s.run_at_startup = v == "1"; }
+    if let Some(v) = get_setting(conn, "wake_word")? {
+        s.wake_word = v;
+    }
+    if let Some(v) = get_setting(conn, "hotkey_display")? {
+        s.hotkey_display = v;
+    }
+    if let Some(v) = get_setting(conn, "groq_api_key")? {
+        s.groq_api_key = v;
+    }
+    if let Some(v) = get_setting(conn, "groq_model")? {
+        s.groq_model = v;
+    }
+    if let Some(v) = get_setting(conn, "primary_provider")? {
+        s.primary_provider = match v.as_str() {
+            "Cohere" => crate::config::LlmProvider::Cohere,
+            "OpenAI" => crate::config::LlmProvider::OpenAI,
+            "Anthropic" => crate::config::LlmProvider::Anthropic,
+            _ => crate::config::LlmProvider::Groq,
+        };
+    }
+    if let Some(v) = get_setting(conn, "cohere_api_key")? {
+        s.cohere_api_key = v;
+    }
+    if let Some(v) = get_setting(conn, "cohere_model")? {
+        s.cohere_model = v;
+    }
+    if let Some(v) = get_setting(conn, "openai_api_key")? {
+        s.openai_api_key = v;
+    }
+    if let Some(v) = get_setting(conn, "openai_model")? {
+        s.openai_model = v;
+    }
+    if let Some(v) = get_setting(conn, "anthropic_api_key")? {
+        s.anthropic_api_key = v;
+    }
+    if let Some(v) = get_setting(conn, "anthropic_model")? {
+        s.anthropic_model = v;
+    }
+    if let Some(v) = get_setting(conn, "sudo_password")? {
+        s.sudo_password = v;
+    }
+    if let Some(v) = get_setting(conn, "run_at_startup")? {
+        s.run_at_startup = v == "1";
+    }
     if let Some(v) = get_setting(conn, "palette_preset")? {
         s.palette_preset = match v.as_str() {
             "Dracula" => PalettePreset::Dracula,
@@ -82,7 +117,9 @@ pub fn load_settings(conn: &Connection) -> Result<Settings> {
         }
     }
     if let Some(v) = get_setting(conn, "orb_size")? {
-        if let Ok(x) = v.parse() { s.orb_size = x; }
+        if let Ok(x) = v.parse() {
+            s.orb_size = x;
+        }
     }
     if let Some(v) = get_setting(conn, "animation_speed")? {
         s.animation_speed = match v.as_str() {
@@ -92,30 +129,54 @@ pub fn load_settings(conn: &Connection) -> Result<Settings> {
         };
     }
     if let Some(v) = get_setting(conn, "window_opacity")? {
-        if let Ok(x) = v.parse() { s.window_opacity = x; }
+        if let Ok(x) = v.parse() {
+            s.window_opacity = x;
+        }
     }
     if let Some(v) = get_setting(conn, "corner_radius")? {
-        if let Ok(x) = v.parse() { s.corner_radius = x; }
+        if let Ok(x) = v.parse() {
+            s.corner_radius = x;
+        }
     }
-    if let Some(v) = get_setting(conn, "font_family")? { s.font_family = v; }
+    if let Some(v) = get_setting(conn, "font_family")? {
+        s.font_family = v;
+    }
     if let Some(v) = get_setting(conn, "font_size")? {
-        if let Ok(x) = v.parse() { s.font_size = x; }
+        if let Ok(x) = v.parse() {
+            s.font_size = x;
+        }
     }
     if let Some(v) = get_setting(conn, "custom_icon_path")? {
         s.custom_icon_path = if v.is_empty() { None } else { Some(v) };
     }
-    if let Some(v) = get_setting(conn, "voice_input_enabled")? { s.voice_input_enabled = v == "1"; }
-    if let Some(v) = get_setting(conn, "tts_enabled")? { s.tts_enabled = v == "1"; }
+    if let Some(v) = get_setting(conn, "voice_input_enabled")? {
+        s.voice_input_enabled = v == "1";
+    }
+    if let Some(v) = get_setting(conn, "tts_enabled")? {
+        s.tts_enabled = v == "1";
+    }
     if let Some(v) = get_setting(conn, "wake_sensitivity")? {
-        if let Ok(x) = v.parse() { s.wake_sensitivity = x; }
+        if let Ok(x) = v.parse() {
+            s.wake_sensitivity = x;
+        }
     }
-    if let Some(v) = get_setting(conn, "piper_voice_path")? { s.piper_voice_path = v; }
+    if let Some(v) = get_setting(conn, "piper_voice_path")? {
+        s.piper_voice_path = v;
+    }
     if let Some(v) = get_setting(conn, "tts_speed")? {
-        if let Ok(x) = v.parse() { s.tts_speed = x; }
+        if let Ok(x) = v.parse() {
+            s.tts_speed = x;
+        }
     }
-    if let Some(v) = get_setting(conn, "tts_pitch")? { s.tts_pitch = v; }
-    if let Some(v) = get_setting(conn, "chime_on_activation")? { s.chime_on_activation = v == "1"; }
-    if let Some(v) = get_setting(conn, "system_prompt")? { s.system_prompt = v; }
+    if let Some(v) = get_setting(conn, "tts_pitch")? {
+        s.tts_pitch = v;
+    }
+    if let Some(v) = get_setting(conn, "chime_on_activation")? {
+        s.chime_on_activation = v == "1";
+    }
+    if let Some(v) = get_setting(conn, "system_prompt")? {
+        s.system_prompt = v;
+    }
     if let Some(v) = get_setting(conn, "language_style")? {
         s.language_style = match v.as_str() {
             "Professional" => LanguageStyle::Professional,
@@ -124,16 +185,38 @@ pub fn load_settings(conn: &Connection) -> Result<Settings> {
             _ => LanguageStyle::Custom,
         };
     }
-    if let Some(v) = get_setting(conn, "language_custom")? { s.language_custom = v; }
+    if let Some(v) = get_setting(conn, "language_custom")? {
+        s.language_custom = v;
+    }
     if let Some(v) = get_setting(conn, "max_tool_iterations")? {
-        if let Ok(x) = v.parse() { s.max_tool_iterations = x; }
+        if let Ok(x) = v.parse() {
+            s.max_tool_iterations = x;
+        }
     }
     if let Some(v) = get_setting(conn, "memory_length")? {
-        if let Ok(x) = v.parse() { s.memory_length = x; }
+        if let Ok(x) = v.parse() {
+            s.memory_length = x;
+        }
     }
-    if let Some(v) = get_setting(conn, "dangerous_confirm")? { s.dangerous_confirm = v == "1"; }
-    if let Some(v) = get_setting(conn, "vosk_model_path")? { s.vosk_model_path = v; }
-    if let Some(v) = get_setting(conn, "piper_binary")? { s.piper_binary = v; }
+    if let Some(v) = get_setting(conn, "dangerous_confirm")? {
+        s.dangerous_confirm = v == "1";
+    }
+    if let Some(v) = get_setting(conn, "vosk_model_path")? {
+        s.vosk_model_path = v;
+    }
+    if let Some(v) = get_setting(conn, "piper_binary")? {
+        s.piper_binary = v;
+    }
+    if let Some(v) = get_setting(conn, "window_width")? {
+        if let Ok(x) = v.parse() {
+            s.window_width = x;
+        }
+    }
+    if let Some(v) = get_setting(conn, "window_height")? {
+        if let Ok(x) = v.parse() {
+            s.window_height = x;
+        }
+    }
     Ok(s)
 }
 
@@ -146,15 +229,23 @@ fn set_kv(conn: &Connection, key: &str, value: &str) -> Result<()> {
 }
 
 pub fn save_settings(conn: &Connection, s: &Settings) -> Result<()> {
-    set_kv(conn, "app_name", &s.app_name)?;
     set_kv(conn, "wake_word", &s.wake_word)?;
     set_kv(conn, "hotkey_display", &s.hotkey_display)?;
     set_kv(conn, "groq_api_key", &s.groq_api_key)?;
     set_kv(conn, "groq_model", &s.groq_model)?;
-    set_kv(conn, "use_cohere_backup", if s.use_cohere_backup { "1" } else { "0" })?;
+    set_kv(conn, "primary_provider", s.primary_provider.as_str())?;
     set_kv(conn, "cohere_api_key", &s.cohere_api_key)?;
     set_kv(conn, "cohere_model", &s.cohere_model)?;
-    set_kv(conn, "run_at_startup", if s.run_at_startup { "1" } else { "0" })?;
+    set_kv(conn, "openai_api_key", &s.openai_api_key)?;
+    set_kv(conn, "openai_model", &s.openai_model)?;
+    set_kv(conn, "anthropic_api_key", &s.anthropic_api_key)?;
+    set_kv(conn, "anthropic_model", &s.anthropic_model)?;
+    set_kv(conn, "sudo_password", &s.sudo_password)?;
+    set_kv(
+        conn,
+        "run_at_startup",
+        if s.run_at_startup { "1" } else { "0" },
+    )?;
     let preset = match s.palette_preset {
         PalettePreset::Monochrome => "Monochrome",
         PalettePreset::Dracula => "Dracula",
@@ -183,7 +274,11 @@ pub fn save_settings(conn: &Connection, s: &Settings) -> Result<()> {
         "custom_icon_path",
         &s.custom_icon_path.clone().unwrap_or_default(),
     )?;
-    set_kv(conn, "voice_input_enabled", if s.voice_input_enabled { "1" } else { "0" })?;
+    set_kv(
+        conn,
+        "voice_input_enabled",
+        if s.voice_input_enabled { "1" } else { "0" },
+    )?;
     set_kv(conn, "tts_enabled", if s.tts_enabled { "1" } else { "0" })?;
     set_kv(conn, "wake_sensitivity", &s.wake_sensitivity.to_string())?;
     set_kv(conn, "piper_voice_path", &s.piper_voice_path)?;
@@ -203,7 +298,11 @@ pub fn save_settings(conn: &Connection, s: &Settings) -> Result<()> {
     };
     set_kv(conn, "language_style", ls)?;
     set_kv(conn, "language_custom", &s.language_custom)?;
-    set_kv(conn, "max_tool_iterations", &s.max_tool_iterations.to_string())?;
+    set_kv(
+        conn,
+        "max_tool_iterations",
+        &s.max_tool_iterations.to_string(),
+    )?;
     set_kv(conn, "memory_length", &s.memory_length.to_string())?;
     set_kv(
         conn,
@@ -212,6 +311,8 @@ pub fn save_settings(conn: &Connection, s: &Settings) -> Result<()> {
     )?;
     set_kv(conn, "vosk_model_path", &s.vosk_model_path)?;
     set_kv(conn, "piper_binary", &s.piper_binary)?;
+    set_kv(conn, "window_width", &s.window_width.to_string())?;
+    set_kv(conn, "window_height", &s.window_height.to_string())?;
     Ok(())
 }
 
@@ -241,9 +342,8 @@ pub fn trim_conversations(conn: &Connection, keep_last_n: u32) -> Result<()> {
 }
 
 pub fn load_recent_messages(conn: &Connection, limit: usize) -> Result<Vec<(String, String)>> {
-    let mut stmt = conn.prepare(
-        "SELECT role, content FROM conversations ORDER BY timestamp DESC LIMIT ?1",
-    )?;
+    let mut stmt =
+        conn.prepare("SELECT role, content FROM conversations ORDER BY timestamp DESC LIMIT ?1")?;
     let rows = stmt.query_map(params![limit as i64], |r| {
         Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
     })?;

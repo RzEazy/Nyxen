@@ -1,1 +1,16 @@
-/target
+/target/
+/nyx-bin
+*.log
+nohup.out
+SESSION.md
+FIXES.md
+FIXES_SUMMARY.md
+SETUP.md
+progress.log
+sysinfo.txt
+system_info.txt
+top_processes.txt
+.codex
+nyx_backup/
+*.db
+.DS_Store

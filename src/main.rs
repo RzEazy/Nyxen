@@ -12,19 +12,19 @@
  */
 
 use eframe::egui::ViewportBuilder;
+use nyx::bridge::OrbBus;
+use nyx::config::Settings;
+use nyx::daemon;
+use nyx::db;
+use nyx::orb_state::OrbState;
+use nyx::tools::ConfirmRequest;
+use nyx::ui::main_window::{MenuCmd, YeezyApp};
 use parking_lot::Mutex;
 use std::sync::Arc;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
-use yeezy::bridge::OrbBus;
-use yeezy::config::Settings;
-use yeezy::daemon;
-use yeezy::db;
-use yeezy::orb_state::OrbState;
-use yeezy::tools::ConfirmRequest;
-use yeezy::ui::main_window::{MenuCmd, YeezyApp};
 
 fn init_tracing() {
-    let _ = std::fs::create_dir_all(db::yeezy_data_dir());
+    let _ = std::fs::create_dir_all(db::nyx_data_dir());
     let log_path = db::log_path();
     let file = match std::fs::OpenOptions::new()
         .create(true)
@@ -56,13 +56,17 @@ fn main() -> eframe::Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let daemon_flag = args.iter().any(|a| a == "--daemon");
 
-    // If running as daemon, detach from parent and run independently
     if daemon_flag {
+        let display = std::env::var("DISPLAY").unwrap_or_else(|_| ":0".to_string());
+        let xauthority = std::env::var("XAUTHORITY").unwrap_or_else(|_| {
+            format!("{}/.Xauthority", std::env::var("HOME").unwrap_or_default())
+        });
+
         if let Ok(child) = std::process::Command::new("sh")
             .arg("-c")
             .arg(format!(
-                "exec setsid {} &",
-                args[0]
+                "exec setsid env DISPLAY={} XAUTHORITY={} {} &",
+                display, xauthority, args[0]
             ))
             .spawn()
         {
@@ -83,7 +87,7 @@ fn main() -> eframe::Result<()> {
         Ok(s) => s,
         Err(e) => {
             eprintln!("settings: {}", e);
-            yeezy::config::Settings::default()
+            Settings::default()
         }
     };
     daemon::ensure_model_paths(&mut settings);
@@ -99,23 +103,23 @@ fn main() -> eframe::Result<()> {
 
     let hotkey_str = settings.lock().hotkey_display.clone();
     daemon::spawn_hotkey_thread(wake_tx.clone(), hotkey_str);
-    let _listen = yeezy::voice::listener::spawn_listener(settings.clone(), wake_tx.clone());
+    let _listen = nyx::voice::listener::spawn_listener(settings.clone(), wake_tx.clone());
 
     let orb = OrbBus::default();
     *orb.state.lock() = OrbState::Idle;
 
-    let app_title = settings.lock().app_name.clone();
-    
+    let app_title = "Nyx".to_string();
+    let window_width = settings.lock().window_width;
+    let window_height = settings.lock().window_height;
+
     let options = eframe::NativeOptions {
         viewport: ViewportBuilder::default()
             .with_title(app_title.clone())
             .with_decorations(false)
             .with_always_on_top()
             .with_visible(false)
-            .with_inner_size([500.0, 650.0])
-            .with_min_inner_size([400.0, 500.0])
-            .with_transparent(false)
-            .with_fullscreen(false)
+            .with_inner_size([window_width, window_height])
+            .with_transparent(true)
             .with_resizable(true),
         ..Default::default()
     };

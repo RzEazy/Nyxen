@@ -3,7 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 PREFIX="${PREFIX:-/usr/local}"
 
-echo "==> Yeezy installer"
+echo "==> Nyx installer"
 
 if command -v apt-get >/dev/null 2>&1; then
   echo "Installing packages with apt-get (needs sudo)..."
@@ -34,7 +34,7 @@ if ! command -v cargo >/dev/null 2>&1; then
   source "$HOME/.cargo/env"
 fi
 
-DATA="$HOME/.local/share/yeezy"
+DATA="$HOME/.local/share/nyxen"
 MODELS="$DATA/models"
 mkdir -p "$MODELS/vosk" "$MODELS/piper" "$ROOT/assets/sounds" "$DATA/assets/sounds"
 
@@ -60,15 +60,15 @@ if [[ ! -f "$DATA/assets/sounds/chime.wav" ]]; then
 fi
 cp -f "$DATA/assets/sounds/chime.wav" "$ROOT/assets/sounds/chime.wav" 2>/dev/null || true
 
-echo "==> Building Yeezy"
+echo "==> Building Nyx"
 (cd "$ROOT" && cargo build --release)
 
-sudo install -Dm755 "$ROOT/target/release/yeezy" "$PREFIX/bin/yeezy"
+sudo install -Dm755 "$ROOT/target/release/nyxen" "$PREFIX/bin/nyxen"
 
 mkdir -p "$HOME/.config/systemd/user"
-cat > "$HOME/.config/systemd/user/yeezy.service" <<EOF
+cat > "$HOME/.config/systemd/user/nyxen.service" <<EOF
 [Unit]
-Description=Yeezy AI Assistant
+Description=Nyx AI Assistant
 After=graphical-session.target
 
 [Service]
@@ -76,7 +76,7 @@ Type=simple
 # User services often start without DISPLAY; tray + GTK need it. Change :0 if you use another screen.
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=%h/.Xauthority
-ExecStart=$PREFIX/bin/yeezy --daemon
+ExecStart=$PREFIX/bin/nyxen --daemon
 Restart=on-failure
 RestartSec=5
 StartLimitIntervalSec=60
@@ -87,23 +87,22 @@ WantedBy=default.target
 EOF
 
 mkdir -p "$HOME/.local/share/applications"
-APP_NAME="$(grep '^name = ' "$ROOT/Cargo.toml" | head -1 | sed 's/.*"\(.*\)".*/\1/')"
-cat > "$HOME/.local/share/applications/yeezy.desktop" <<EOF
+cat > "$HOME/.local/share/applications/nyxen.desktop" <<EOF
 [Desktop Entry]
 Type=Application
-Name=${APP_NAME:-Yeezy}
-Exec=$PREFIX/bin/yeezy --daemon
+Name=Nyxen
+Exec=$PREFIX/bin/nyxen --daemon
 Icon=$ROOT/assets/icon.svg
 Categories=Utility;
 EOF
 
 systemctl --user daemon-reload || true
-systemctl --user enable --now yeezy.service || true
+systemctl --user enable --now nyxen.service || true
 
 echo ""
-echo "Yeezy installed to $PREFIX/bin/yeezy"
-echo "- Logs: ~/.local/share/yeezy/yeezy.log"
-echo "- DB:   ~/.local/share/yeezy/yeezy.db"
+echo "Nyxen installed to $PREFIX/bin/nyxen"
+echo "- Logs: ~/.local/share/nyxen/nyxen.log"
+echo "- DB:   ~/.local/share/nyxen/nyxen.db"
 echo "- Set GROQ API key in the welcome/settings UI."
 echo ""
 echo "Note: Global hotkeys use X11; Wayland support depends on your session."
