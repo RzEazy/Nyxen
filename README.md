@@ -67,6 +67,17 @@ Settings are stored in `~/.local/share/nyx/nyx.db` and can be configured via the
 - **Voice**: TTS settings, wake sensitivity
 - **Agent**: API keys for different providers, model selection
 
+### Uninstall
+
+```bash
+# Run the uninstaller
+./nyxen-uninstall
+# or
+./uninstall.sh
+```
+
+This will remove Nyxen and all associated data including the binary, data directory, desktop entry, and systemd service.
+
 ## Usage
 
 - **Ctrl+Space**: Open/close overlay (X11 global hotkey)
